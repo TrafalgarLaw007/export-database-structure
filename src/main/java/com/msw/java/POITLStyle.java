@@ -7,16 +7,18 @@ public class POITLStyle {
 
 	public static Style getHeaderStyle(){
 		Style style = new Style();
-		style.setBold(true);
-		style.setFontSize(14);
+		style.setBold(false);
+//		style.setBold(true);
+		style.setFontSize(12);
 		style.setColor("000000");
 		style.setFontFamily("宋体");
 		return style;
 	}
 	
 	public static TableStyle getHeaderTableStyle(){
-		TableStyle style = new TableStyle();;
-		style.setBackgroundColor("B7B7B7");
+		TableStyle style = new TableStyle();
+//		style.setBackgroundColor("B7B7B7");
+		style.setBackgroundColor("FFCC99");
 		return style;
 	}
 	

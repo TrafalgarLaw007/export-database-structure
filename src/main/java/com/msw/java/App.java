@@ -17,6 +17,8 @@ import com.deepoove.poi.data.MiniTableRenderData;
 import com.deepoove.poi.data.RowRenderData;
 import com.deepoove.poi.data.TextRenderData;
 
+import static com.msw.java.Constants.MYSQL_CONNECTION_PARAM;
+
 /**
  * 把数据库中的表结构导出word中
  * @author MOSHUNWEI
@@ -71,10 +73,23 @@ public class App
     	//查询表的名称以及一些表需要的信息
     	String mysqlSql1 = "SELECT table_name, table_type , ENGINE,table_collation,table_comment, create_options FROM information_schema.TABLES WHERE table_schema='"+map.get("-n")+"'";
     	//查询表的结构信息
-    	String mysqlSql2 = "SELECT ordinal_position,column_name,column_type, column_key, extra ,is_nullable, column_default, column_comment,data_type,character_maximum_length "
-    			+ "FROM information_schema.columns WHERE table_schema='"+map.get("-n")+"' and table_name='";
-		ResultSet rs = SqlUtils.getResultSet(SqlUtils.getConnnection(String.format("jdbc:mysql://%s:%s",map.get("h"),map.get("p")),map.get("-u"), map.get("-p")),mysqlSql1);
-		Connection con = SqlUtils.getConnnection(String.format("jdbc:mysql://%s:%s",map.get("h"),map.get("p")),map.get("-u"), map.get("-p"));
+    	/*String mysqlSql2 = "SELECT ordinal_position,column_name,column_type, column_key, extra ,is_nullable, column_default, column_comment,data_type,character_maximum_length "
+    			+ "FROM information_schema.columns WHERE table_schema='"+map.get("-n")+"' and table_name='";*/
+
+		String mysqlSql2 = "SELECT " +
+				"ordinal_position," +
+				"column_comment," + // 字段名称
+				"column_name," + // 表字段
+				"CASE WHEN COLUMN_KEY = 'PRI' THEN 'Y' ELSE '' END column_key," + // 主键
+				"data_type," + // 主键
+				"IFNULL(IFNULL(CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION), 0) length," + // 长度
+				"CASE WHEN NUMERIC_SCALE IS NULL OR NUMERIC_SCALE=0 THEN '' ELSE NUMERIC_SCALE END numeric_scale," + // 小数点
+				"CASE WHEN is_nullable = 'YES' THEN '' ELSE 'N' END is_nullable," + // 是否为空
+				"column_key, extra , column_default, column_comment,character_maximum_length "
+				+ "FROM information_schema.columns WHERE table_schema='"+map.get("-n")+"' and table_name='";
+
+		ResultSet rs = SqlUtils.getResultSet(SqlUtils.getConnnection(DBUrlUtils.handlerMySQLUrl(map.get("h"), map.get("p")),map.get("-u"), map.get("-p")),mysqlSql1);
+		Connection con = SqlUtils.getConnnection(DBUrlUtils.handlerMySQLUrl(map.get("h"), map.get("p")),map.get("-u"), map.get("-p"));
 		createDoc(rs,mysqlSql2,map,outFile,true,"MySQL数据库表结构",con);
 		
     }
@@ -89,6 +104,10 @@ public class App
 		List<Map<String,Object>> tableList = new ArrayList<Map<String,Object>>();
 		int i = 0;
 		for(Map<String, String> str : list){
+			// 只导出表格
+			if (!"BASE TABLE".equals(str.get("table_type"))) {
+				continue;
+			}
 			System.out.println(str);
 			i++;
 			String sql = sqls+str.get("table_name")+"'";
@@ -169,7 +188,7 @@ public class App
      * table的表头
      * @return RowRenderData
      */
-    private static RowRenderData getHeader(){
+    /*private static RowRenderData getHeader(){
     	RowRenderData header = RowRenderData.build(
 				new TextRenderData("序号", POITLStyle.getHeaderStyle()),
 				new TextRenderData("字段名称", POITLStyle.getHeaderStyle()),
@@ -180,13 +199,29 @@ public class App
 				new TextRenderData("缺省值", POITLStyle.getHeaderStyle()));
 		header.setStyle(POITLStyle.getHeaderTableStyle());
 		return header;
-    }
+    }*/
+
+	private static RowRenderData getHeader(){
+		RowRenderData header = RowRenderData.build(
+				new TextRenderData("序号", POITLStyle.getHeaderStyle()),
+				new TextRenderData("字段名称", POITLStyle.getHeaderStyle()),
+				new TextRenderData("表字段", POITLStyle.getHeaderStyle()),
+				new TextRenderData("主键", POITLStyle.getHeaderStyle()),
+				new TextRenderData("字段类型", POITLStyle.getHeaderStyle()),
+				new TextRenderData("长度", POITLStyle.getHeaderStyle()),
+				new TextRenderData("小数位数", POITLStyle.getHeaderStyle()),
+				new TextRenderData("可为空", POITLStyle.getHeaderStyle()),
+				new TextRenderData("备注", POITLStyle.getHeaderStyle())
+		);
+		header.setStyle(POITLStyle.getHeaderTableStyle());
+		return header;
+	}
     
     /**
      * 获取一张表的结构数据
      * @return List<RowRenderData>
      */
-    private static List<RowRenderData> getRowRenderData(ResultSet set) {
+    /*private static List<RowRenderData> getRowRenderData(ResultSet set) {
     	List<RowRenderData> result = new ArrayList<>();
     	
     	try {
@@ -214,6 +249,39 @@ public class App
 			e.printStackTrace();
 		}
   
+		return result;
+	}*/
+
+	private static List<RowRenderData> getRowRenderData(ResultSet set) {
+		List<RowRenderData> result = new ArrayList<>();
+
+		try {
+			int i = 0;
+			while(set.next()){
+				i++;
+				RowRenderData row = RowRenderData.build(
+						new TextRenderData(set.getString("ordinal_position")+""),
+						new TextRenderData(set.getString("column_comment")+""),
+						new TextRenderData(set.getString("column_name")+""),
+						new TextRenderData(set.getString("column_key")+""),
+						new TextRenderData(set.getString("data_type")+""),
+						new TextRenderData(set.getString("length")+""),
+						new TextRenderData(set.getString("numeric_scale")+""),
+						new TextRenderData(set.getString("is_nullable")+""),
+						new TextRenderData("")
+				);
+				/*if(i%2==0){
+					row.setStyle(POITLStyle.getBodyTableStyle());
+					result.add(row);
+				}else{
+					result.add(row);
+				}*/
+				result.add(row);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
 		return result;
 	}
 

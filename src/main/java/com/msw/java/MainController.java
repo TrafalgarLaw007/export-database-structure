@@ -31,6 +31,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
+import static com.msw.java.Constants.MYSQL_CONNECTION_PARAM;
+
 public class MainController implements Initializable{
 
 	@FXML
@@ -70,6 +72,14 @@ public class MainController implements Initializable{
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+
+		// 设置默认值
+		port.setText("3306");
+		host.setText("localhost");
+		username.setText("root");
+		password.setText("root");
+		dirPath.setText("D:\\");
+
 		dbType.setItems(FXCollections.observableArrayList("mysql","oracle"));
 		dbType.getSelectionModel().select(0);
 		Image image = new Image("/head_2.jpg");
@@ -99,7 +109,7 @@ public class MainController implements Initializable{
 			return ;
 		}
 		if("mysql".equals(type)){
-			Connection con = SqlUtils.getConnnection(String.format("jdbc:mysql://%s:%s",h,p),user, pwd);
+			Connection con = SqlUtils.getConnnection(DBUrlUtils.handlerMySQLUrl(h, p), user, pwd);
 			if(con==null) {
 				Alerts(false,"connecting to database failed");
 				return ;
@@ -151,7 +161,7 @@ public class MainController implements Initializable{
 		String p = port.getText();
 		String h = host.getText();
 		if("mysql".equals(type)){
-			Connection con = SqlUtils.getConnnection(String.format("jdbc:mysql://%s:%s",h,p),user, pwd);
+			Connection con = SqlUtils.getConnnection(DBUrlUtils.handlerMySQLUrl(h, p), user, pwd);
 			if(con!=null){
 				Alerts(true,"connected to database success");
 				return true;

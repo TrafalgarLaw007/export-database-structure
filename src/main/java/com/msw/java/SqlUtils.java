@@ -12,7 +12,8 @@ public class SqlUtils {
 	
 	static {
 		try {
-			Class.forName("com.mysql.jdbc.Driver");
+//			Class.forName("com.mysql.jdbc.Driver");
+			Class.forName("com.mysql.cj.jdbc.Driver");
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -23,6 +24,7 @@ public class SqlUtils {
 			return DriverManager.getConnection(url, user, password);
 		} catch (SQLException e) {
 			System.out.println("Access denied for user (using password: NO)");
+			e.printStackTrace();
 			return null;
 		}
 	}
