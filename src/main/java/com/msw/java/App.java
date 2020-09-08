@@ -6,10 +6,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.deepoove.poi.XWPFTemplate;
 import com.deepoove.poi.data.DocxRenderData;
@@ -112,6 +110,7 @@ public class App
 			i++;
 			String sql = sqls+str.get("table_name")+"'";
 			ResultSet set = SqlUtils.getResultSet(con,sql);
+
 			List<RowRenderData> rowList = getRowRenderData(set);
 			Map<String,Object> data = new HashMap<>();
 			data.put("no", ""+i);
@@ -255,10 +254,14 @@ public class App
 	private static List<RowRenderData> getRowRenderData(ResultSet set) {
 		List<RowRenderData> result = new ArrayList<>();
 
+		Map<Integer, RowRenderData> rowRenderDataMap = new HashMap<>();
+		List<Integer> positionList = new ArrayList<>();
+
 		try {
 			int i = 0;
 			while(set.next()){
 				i++;
+//				System.out.println("序号: " + set.getString("ordinal_position")+"");
 				RowRenderData row = RowRenderData.build(
 						new TextRenderData(set.getString("ordinal_position")+""),
 						new TextRenderData(set.getString("column_comment")+""),
@@ -270,17 +273,29 @@ public class App
 						new TextRenderData(set.getString("is_nullable")+""),
 						new TextRenderData("")
 				);
+
+				rowRenderDataMap.put(set.getInt("ordinal_position"), row);
+				positionList.add(set.getInt("ordinal_position"));
+
 				/*if(i%2==0){
 					row.setStyle(POITLStyle.getBodyTableStyle());
 					result.add(row);
 				}else{
 					result.add(row);
 				}*/
-				result.add(row);
+				// result.add(row);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
+		positionList = positionList.stream()
+				.sorted(Comparator.naturalOrder())
+				.collect(Collectors.toList());
+
+		positionList.forEach(p -> {
+			result.add(rowRenderDataMap.get(p));
+		});
 
 		return result;
 	}
